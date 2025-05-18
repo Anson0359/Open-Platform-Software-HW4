@@ -71,7 +71,6 @@ handler = WebhookHandler(channel_secret)
 
 # 簡單記憶體資料庫：儲存使用者對話紀錄
 user_input_history = {}  # key = user_id, value = list of strings
-bot_output_history = {}
 
 @app.route("/")
 def home():
@@ -110,7 +109,7 @@ def message_text(event):
         user_text = messagetype
     
     user_id = event.source.user_id
-    print(event.message)
+
     # 儲存歷史訊息
     if user_id not in user_input_history:
         user_input_history[user_id] = []
@@ -141,7 +140,7 @@ def message_text(event):
         )
     elif message == 'Flex' or message == 'flex':
         output = FlexSendMessage(
-            alt_text='IDK',
+            alt_text='Starbucks',
             contents={
                 "type": "bubble",
                 "hero": {
@@ -295,9 +294,13 @@ def message_text(event):
                   }
                 }
         )
-    else:
+    elif messagetype == 'text':
         gemini_result = gemini_llm_sdk(event.message.text)
         output = TextMessage(text=gemini_result)
+    else:
+        print(f'Undefined type : {messagetype}')
+        gemini_result = gemini_llm_sdk(f'用中文，且用你的性格表達:我不接受{messagetype}訊息')
+        output = TextMessage(text = gemini_result)
 
     line_bot_api.reply_message(
         event.reply_token, output
