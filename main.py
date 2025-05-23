@@ -70,7 +70,7 @@ line_bot_api = LineBotApi(channel_access_token)
 handler = WebhookHandler(channel_secret)
 
 # 簡單記憶體資料庫：儲存使用者對話紀錄
-user_input_history = {}  # key = user_id, value = list of strings
+user_input_history = []
 
 @app.route("/")
 def home():
@@ -111,9 +111,7 @@ def message_text(event):
     user_id = event.source.user_id
 
     # 儲存歷史訊息
-    if user_id not in user_input_history:
-        user_input_history[user_id] = []
-    user_input_history[user_id].append(user_text)
+    user_input_history.append(user_text)
 
     # 傳送貼圖
     if message == 'Sticker' or message == 'sticker' or messagetype == 'sticker':
@@ -306,22 +304,17 @@ def message_text(event):
         event.reply_token, output
     )
 
-@app.route("/history/<user_id>", methods=['GET'])
-def get_history(user_id):
-    history = user_input_history.get(user_id, [])
+@app.route("/history", methods=['GET'])
+def get_history():
+    history = user_input_history
     return jsonify({
-        "user_id": user_id,
         "history": history
     })
 
-@app.route("/history/<user_id>", methods=['DELETE'])
-def delete_history(user_id):
-    if user_id in user_input_history:
-        del user_input_history[user_id]
-        chat.history.clear()
-        return jsonify({"message": f"已刪除 {user_id} 的歷史紀錄"})
-    else:
-        return jsonify({"message": f"{user_id} 無任何紀錄"}), 404
+@app.route("/history", methods=['DELETE'])
+def delete_history():
+    user_input_history.clear()
+    return jsonify({"message": f"已刪除歷史紀錄"})
     
 def gemini_llm_sdk(user_input):
     try:
